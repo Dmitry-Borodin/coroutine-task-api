@@ -1,7 +1,7 @@
 package com.krenvpravo.experimental.tasks
 
 import kotlinx.coroutines.experimental.CoroutineDispatcher
-import kotlinx.coroutines.experimental.Deferred
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
 
 interface Task<out P> {
@@ -13,30 +13,36 @@ interface Task<out P> {
      */
     fun onError(errorType: KClass<out Any> = Exception::class, throwable: Throwable): Task<P>
 
-    fun switchExecutor(dispatcher: CoroutineDispatcher) //todo abstract it
-    fun run()
+    fun switchExecutor(dispatcher: CoroutineDispatcher): Task<P> //todo abstract it
+    fun run(): P
+
+    fun isComplete(): Boolean
+
+    fun isSuccessful(): Boolean
+
+    fun isCanceled(): Boolean
 }
 
 
-class TaskImpl<P>(internal val previousResult: P) : Task<P> {
-    internal val previousTask: Deferred<P>
+class TaskImpl<C>(internal val previousTask: AtomicReference<Task<P>>, ) : Task<C> {
+    var nextTask : AtomicReference<Task<*>>? = null
 
-    override fun <T> add(work: (previous: P) -> T): Task<T> {
-        return TaskImpl(work(previousResult))
+    override fun <T> add(work: (previous: C) -> T): Task<T> {
+        return nextTask = TaskImpl(AtomicReference(this())
     }
 
-    override fun switchExecutor(dispatcher: CoroutineDispatcher) {
+    override fun onError(errorType: KClass<out Any>, throwable: Throwable): Task<C> {
     }
 
-    override fun onError(errorType: KClass<out Any>, throwable: Throwable): Task<P> {
+    override fun switchExecutor(dispatcher: CoroutineDispatcher): Task<C> {
     }
 
-    override fun run() {
+    override fun run(): C {
     }
-
 }
 
 fun <T> createTask(work: () -> T) = TaskImpl(Unit).add { work() }
+
 
 
 
