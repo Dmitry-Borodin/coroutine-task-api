@@ -11,6 +11,7 @@ interface Task<out P> {
 }
 
 class TaskImpl<P>(override val previousResult: P) : Task<P> {
+
     val taskList = listOf<Task<*>>()
 
     override fun <T> add(work: (previous: P) -> T) {
